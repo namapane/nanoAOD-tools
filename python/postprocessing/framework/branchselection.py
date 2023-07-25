@@ -7,17 +7,27 @@ except AttributeError:
 
 
 class BranchSelection():
-    def __init__(self, filename):
+    def __init__(self, branchsel):
         comment = re.compile(r"#.*")
         ops = []
-        for line in open(filename, 'r'):
-            line = line.strip()
-            if len(line) == 0 or line[0] == '#':
-                continue
-            line = re.sub(comment, "", line)
-            while line[-1] == "\\":
-                line = line[:-1] + " " + file.next().strip()
+
+        if isinstance(branchsel, list):
+            # branchsel is a list of commands
+            lines = branchsel
+        elif isinstance(branchsel, str):
+            # branchsel is a filename
+            lines=[]
+            for line in open(branchsel, 'r'):
+                line = line.strip()
+                if len(line) == 0 or line[0] == '#':
+                    continue
                 line = re.sub(comment, "", line)
+                while line[-1] == "\\":
+                    line = line[:-1] + " " + file.next().strip()
+                    line = re.sub(comment, "", line)
+                lines.append(line)
+                
+        for line in lines:
             try:
                 (op, sel) = line.split()
                 if op == "keep":
@@ -29,12 +39,12 @@ class BranchSelection():
                 elif op == "dropmatch":
                     ops.append((re.compile("(:?%s)$" % sel), 0))
                 else:
-                    print("Error in file %s, line '%s': "% (filename, line)
-                        + ": it's not (keep|keepmatch|drop|dropmatch) "
+                    print("Error in branchsel: line '%s': "% (line)
+                        + "it's not (keep|keepmatch|drop|dropmatch) "
                         + "<branch_pattern>"
                     )
             except ValueError as e:
-                print("Error in file %s, line '%s': " % (filename, line)
+                print("Error in branchsel: line '%s': " % (line)
                     + "it's not (keep|keepmatch|drop|dropmatch) "
                     + "<branch_pattern>"
                 )
